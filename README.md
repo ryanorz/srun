@@ -30,8 +30,10 @@ This is a service for generating a sandbox to execute commands.
 
 # Build
 
-> cd <Source Dir>
-> mkdir build && cd build
-> cmake -DCMAKE_INSTALL_PREFIX=<Prefix> ..
-> make
-> sudo make install
+```sh
+$ cd <Source Dir>
+$ mkdir build && cd build
+$ cmake -DCMAKE_INSTALL_PREFIX=<Prefix> ..
+$ make
+$ sudo make install
+```
