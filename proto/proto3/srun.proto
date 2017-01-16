@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+message Request {
+	enum OutMode {
+		IGN = 0;
+		MSG = 1;
+		FILE = 2;
+	}
+	repeated string args = 1;
+	int32   timeout = 2;
+	string  user = 3;
+	string  chroot = 4;
+	OutMode outmode = 5;
+	OutMode errmode = 6;
+	string  outfile = 7;
+	string  errfile = 8;
+	bool   network = 9;
+	bool   backend = 10;
+}
+
+message Response {
+	enum State {
+		NORMAL = 0;
+		TIMEOUT = 1;
+		ABNORMAL = 2;
+		BADARGS = 3;
+	}
+
+	State stat = 1;
+	int32 retval = 2;
+	string outstr = 3;
+	string errstr = 4;
+}
+
+message Runproc {
+	int32 pid = 1;
+	int64 since = 2;
+	Request request = 3;
+}
+
+message Message {
+	enum Method {
+		EXE = 0;
+		SYN = 1;
+		ACK = 2;
+		LIST = 3;
+		STOP = 4;
+	}
+	Method method = 1;
+	Response response = 2;
+	Request request = 3;
+	repeated Runproc runlist = 4;
+}
+

@@ -1,0 +1,12 @@
+
+/var/log/srund.log {
+	create
+	rotate 8
+	size 8M
+	nomail
+	missingok
+	sharedscripts
+	postrotate
+		/bin/systemctl kill -s HUP rsyslog.service >/dev/null 2>&1 || true
+	endscript
+}

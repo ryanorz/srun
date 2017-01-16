@@ -1,0 +1,54 @@
+syntax = "proto2";
+
+message Request {
+	enum OutMode {
+		IGN = 0;
+		MSG = 1;
+		FILE = 2;
+	}
+	repeated string args = 1;
+	optional int32   timeout = 2 [default = 0];
+	optional string  user = 3;
+	optional string  chroot = 4;
+	optional OutMode outmode = 5 [default = IGN];
+	optional OutMode errmode = 6 [default = IGN];
+	optional string  outfile = 7;
+	optional string  errfile = 8;
+	optional bool   network = 9 [default = false];
+	optional bool   backend = 10 [default = false];
+}
+
+message Response {
+	enum State {
+		NORMAL = 0;
+		TIMEOUT = 1;
+		ABNORMAL = 2;
+		BADARGS = 3;
+	}
+
+	required State stat = 1 [default = NORMAL];
+	optional int32 retval = 2;
+	optional string outstr = 3;
+	optional string errstr = 4;
+}
+
+message Runproc {
+	required int32 pid = 1;
+	optional int64 since = 2;
+	optional Request request = 3;
+}
+
+message Message {
+	enum Method {
+		EXE = 0;
+		SYN = 1;
+		ACK = 2;
+		LIST = 3;
+		STOP = 4;
+	}
+	required Method method = 1;
+	optional Response response = 2;
+	optional Request request = 3;
+	repeated Runproc runlist = 4;
+}
+
