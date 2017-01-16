@@ -28,3 +28,10 @@ This is a service for generating a sandbox to execute commands.
 |         | boost-filesystem | 1.58        | 1.58        | libboost-filesystem-dev | boost-devel      |
 |         | libprotobuf      | 3.0, 2.6.1  | 2.6.1       | libprotobuf-dev         | protobuf         |
 
+# Build
+
+> cd <Source Dir>
+> mkdir build && cd build
+> cmake -DCMAKE_INSTALL_PREFIX=<Prefix> ..
+> make
+> sudo make install
