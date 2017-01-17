@@ -45,6 +45,12 @@ using namespace boost::filesystem;
 #define BUFSIZE		1024
 #define STACK_SIZE	(1024 * 1024)
 
+enum ProcessStatus {
+	NO_PROC,
+	PROC_RUNNING,
+	PROC_EXIT
+};
+
 static int connection = -1;
 static pid_t clonepid = 0;
 static int epollfd = -1;
@@ -54,7 +60,7 @@ static Output err;
 static int syn_timeout = 1000; // milliseconds
 static bool is_syn = false;
 static bool result_sendback = false;
-static bool child_exit = false;
+static ProcessStatus child_status = NO_PROC;
 static Response response;
 static Request request;
 
@@ -66,16 +72,15 @@ static void handle_request(const string &data);
 static void set_timeout();
 static int execute(__attribute__((unused))void* _message);
 
-
 static bool exec_over()
 {
-	return (clonepid <= 0) || (child_exit && out.over && err.over);
+	return (child_status == PROC_EXIT && out.over && err.over);
 }
 
 static void stop_child()
 {
 	syslog(LOG_DEBUG, "Stop child process if it exists");
-	if (clonepid > 0 && !child_exit)
+	if (child_status == PROC_RUNNING)
 		kill(clonepid, SIGTERM);
 }
 
@@ -122,20 +127,24 @@ void srun::manager_start(int connection_fd, const Config &config)
 		wait_child();
 
 		// Deal with client disconnect and command exit
-		if (request.backend() && exec_over()) {
-			manager_destroy();
-			exit(0);
-		} else if (connection == -1 && exec_over()) {
-			manager_destroy();
-			exit(0);
-		} else if (exec_over() && !result_sendback) {
-			Message message;
-			message.set_method(Message_Method_EXE);
-			Response *response_ptr = message.mutable_response();
-			*response_ptr = response;
-			response_ptr->set_outstr(out.str);
-			response_ptr->set_errstr(err.str);
-			send_message(message);
+		if (exec_over()) {
+			if (connection == -1) {
+				manager_destroy();
+				exit(0);
+			} else if (!result_sendback) {
+				Message message;
+				message.set_method(Message_Method_EXE);
+				Response *response_ptr = message.mutable_response();
+				*response_ptr = response;
+				response_ptr->set_outstr(out.str);
+				response_ptr->set_errstr(err.str);
+				send_message(message);
+			}
+		} else if (child_status == NO_PROC) {
+			if (connection == -1) {
+				manager_destroy();
+				exit(0);
+			}
 		}
 
 		if (process_stop) {
@@ -206,7 +215,7 @@ static void wait_child()
 			continue;
 
 		syslog(LOG_DEBUG, "Waitpid %d", clonepid);
-		child_exit = true;
+		child_status = PROC_EXIT;
 		if (WIFEXITED(stat)) {
 			response.set_stat(Response_State_NORMAL);
 			response.set_retval(WEXITSTATUS(stat));
@@ -227,6 +236,7 @@ static void wait_child()
 
 static void send_message(const Message& message)
 {
+	syslog(LOG_DEBUG, "Send message, method : %d", message.method());
 	string data;
 	ThrowRuntimeIf(!message.SerializeToString(&data),
 		"Message SerializeToString failed"
@@ -344,6 +354,7 @@ static void set_timeout()
 		else
 			timeout = 600;
 	}
+	syslog(LOG_DEBUG, "Set timeout %d", timeout);
 	itimerspec new_timer, old_timer;
 	new_timer.it_interval.tv_sec  = timeout;
 	new_timer.it_interval.tv_nsec = 0;
@@ -403,6 +414,9 @@ static void handle_request(const string &data)
 		send_message(message);
 		return;
 	}
+	syslog(LOG_DEBUG, "Command : %s", request.args(0).c_str());
+	syslog(LOG_DEBUG, "Outmode : %d, Errmode : %d", request.outmode(), request.errmode());
+	syslog(LOG_DEBUG, "Network : %d, Backend : %d", request.network(), request.backend());
 
 	out.load(request.outmode(), request.outfile(), request.backend());
 	err.load(request.errmode(), request.errfile(), request.backend());
@@ -419,6 +433,7 @@ static void handle_request(const string &data)
 		clone_flags |= CLONE_NEWNET;
 	clonepid = clone(execute, stack_top,  clone_flags, NULL);
 	ThrowCAPIExceptionIf(clonepid == -1, "clone");
+	child_status = PROC_RUNNING;
 
 	syslog(LOG_DEBUG, "Clone a child with pid %d", clonepid);
 	const string pidstr = to_string(clonepid);

@@ -119,7 +119,7 @@ static void clear_resource()
 
 int main() {
 	try {
-		//setlogmask(LOG_UPTO(LOG_NOTICE));
+		setlogmask(LOG_UPTO(LOG_NOTICE));
 		int ret;
 		ThrowCAPIExceptionIf(daemon(0, 1) != 0, "daemon error");
 		syslog(LOG_NOTICE, "srund start.");
