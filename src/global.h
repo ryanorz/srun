@@ -18,6 +18,7 @@
 #ifndef SRUN_GLOBAL_H
 #define SRUN_GLOBAL_H
 
+#include "config.h"
 #include <string>
 using std::string;
 
@@ -33,6 +34,9 @@ const string sockfile = "/var/run/srund/srund.sock";
 const string lockfile = "/var/run/srund/srund.lock";
 const string tmpfs = "/var/cache/srund.tmpfs";
 const string find_paths[] = {"/usr/local/bin/", "/usr/bin/", "/bin/", "/usr/local/sbin/", "/usr/sbin/", "/sbin/"};
+
+const string confpath = "/etc/srund/srund.conf";
+const string confdir = "/etc/srund/srund.d";
 
 extern bool  process_stop;
 extern int lockfd;

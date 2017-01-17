@@ -4,12 +4,14 @@ set(SRUND_SRC
   manager.cpp
   output.cpp
   utils.cpp
+  config.cpp
 )
 add_executable(srund ${SRUND_SRC})
 target_link_libraries(srund
   srun_proto
   ${PROTOBUF_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${GLIB2_LIBRARIES}
 )
 
 set(SRUNCTL_SRC

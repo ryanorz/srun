@@ -16,6 +16,7 @@ message Request {
 	string  errfile = 8;
 	bool   network = 9;
 	bool   backend = 10;
+	string confgroup = 11;
 }
 
 message Response {

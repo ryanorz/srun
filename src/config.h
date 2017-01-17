@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 石印 <ryanorz@126.com>
+ * Copyright 2017 石印 <shiy@suninfo.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,30 @@
  *
  */
 
-#ifndef SRUN_MANAGER_H
-#define SRUN_MANAGER_H
+#ifndef SRUN_CONFIG_H
+#define SRUN_CONFIG_H
 
-#include "config.h"
+#include "srun.pb.h"
+#include <glib.h>
+#include <string>
+#include <map>
+using std::map;
+using std::string;
 
 namespace srun {
 
-void manager_start(int connection_fd, const Config &_conf);
+class Config
+{
+public:
+	Config();
+	~Config() noexcept;
+	bool loadRequest(Request &request) const noexcept;
+	bool loadRequest(const string &file, Request &request) const noexcept;
+private:
+	map<string, GKeyFile*> keyfiles;
 
-void manager_destroy() noexcept;
+	void fillRequest(GKeyFile *keyfile, const string &group, Request &request) const noexcept;
+};
 }
 
-#endif // SRUN_MANAGER_H
+#endif // SRUN_CONFIG_H

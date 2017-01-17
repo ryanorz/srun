@@ -61,10 +61,11 @@ static Request request;
 static void signal_register();
 static void wait_child();
 static void send_message(const Message& message);
-static void recv_message();
+static void recv_message(const Config& config);
 static void handle_request(const string &data);
 static void set_timeout();
 static int execute(__attribute__((unused))void* _message);
+
 
 static bool exec_over()
 {
@@ -73,6 +74,7 @@ static bool exec_over()
 
 static void stop_child()
 {
+	syslog(LOG_DEBUG, "Stop child process if it exists");
 	if (clonepid > 0 && !child_exit)
 		kill(clonepid, SIGTERM);
 }
@@ -80,6 +82,7 @@ static void stop_child()
 static void clear_clonepid() noexcept
 {
 	if (clonepid > 0) {
+		syslog(LOG_DEBUG, "Clear clonepid resource");
 		string clone_file = tmpfs + "/" + to_string(clonepid);
 		string leaf = CGMemoryRoot + "/" + to_string(clonepid);
 		clonepid = 0;
@@ -93,6 +96,7 @@ static void clear_clonepid() noexcept
 
 void srun::manager_destroy() noexcept
 {
+	syslog(LOG_DEBUG, "Manager destroy");
 	clear_clonepid();
 	closefd(connection);
 	closefd(epollfd);
@@ -100,7 +104,7 @@ void srun::manager_destroy() noexcept
 	google::protobuf::ShutdownProtobufLibrary();
 }
 
-void srun::manager_start(int connection_fd)
+void srun::manager_start(int connection_fd, const Config &config)
 {
 	connection = connection_fd;
 	signal_register();
@@ -156,7 +160,7 @@ void srun::manager_start(int connection_fd)
 
 		for (int i = 0; i < nfds; ++i) {
 			if (events[i].data.fd == connection) {
-				recv_message();
+				recv_message(config);
 			} else if (events[i].data.fd == out.pipefd[0]) {
 				out.receive(epollfd);
 			} else if (events[i].data.fd == err.pipefd[0]) {
@@ -201,6 +205,7 @@ static void wait_child()
 		if (clonepid != pid)
 			continue;
 
+		syslog(LOG_DEBUG, "Waitpid %d", clonepid);
 		child_exit = true;
 		if (WIFEXITED(stat)) {
 			response.set_stat(Response_State_NORMAL);
@@ -234,7 +239,7 @@ static void send_message(const Message& message)
 		result_sendback = true;
 }
 
-static void recv_message()
+static void recv_message(const Config &config)
 {
 	string data;
 	char buffer[BUFSIZE];
@@ -243,6 +248,7 @@ static void recv_message()
 		data.append(buffer, len);
 
 	if (data.empty()) {
+		syslog(LOG_DEBUG, "Connection is closed");
 		syn_timeout = -1;
 		epoll_ctl(epollfd, EPOLL_CTL_DEL, connection, NULL);
 		closefd(connection);
@@ -256,6 +262,7 @@ static void recv_message()
 	ThrowRuntimeIf(!message.ParseFromString(data),
 		"Message ParseFromString failed"
 	);
+	syslog(LOG_DEBUG, "Receive message, method : %d", message.method());
 	Message sendback;
 	switch (message.method()) {
 	case Message_Method_SYN:
@@ -267,6 +274,8 @@ static void recv_message()
 		break;
 	case Message_Method_EXE:
 		request = message.request();
+		syslog(LOG_DEBUG, "Request confgroup : %s", request.confgroup().c_str());
+		config.loadRequest(request);
 		handle_request(data);
 		break;
 	case Message_Method_LIST:
@@ -411,6 +420,7 @@ static void handle_request(const string &data)
 	clonepid = clone(execute, stack_top,  clone_flags, NULL);
 	ThrowCAPIExceptionIf(clonepid == -1, "clone");
 
+	syslog(LOG_DEBUG, "Clone a child with pid %d", clonepid);
 	const string pidstr = to_string(clonepid);
 	const string leaf = CGMemoryRoot + "/" + pidstr;
 	ThrowRuntimeIf(!is_directory(leaf) && !create_directories(leaf),

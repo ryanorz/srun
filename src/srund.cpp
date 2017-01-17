@@ -32,6 +32,7 @@
 #include "manager.h"
 #include "global.h"
 #include "utils.h"
+#include "config.h"
 
 using namespace boost::filesystem;
 using namespace srun;
@@ -128,6 +129,8 @@ int main() {
 		lockfd = open(lockfile.c_str(), O_CLOEXEC | O_CREAT | O_TRUNC | O_RDWR);
 		ThrowCAPIExceptionIf(-1 == lockfd, "open lockfile");
 
+		Config config;
+
 		//NOTE SOCK_NONBLOCK, SOCK_CLOEXEC can be used since Linux 2.6.27.
 		int sockfd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 		ThrowCAPIExceptionIf(sockfd == -1, "create socket");
@@ -172,7 +175,7 @@ int main() {
 			if (pid == 0) {
 				close(sockfd);
 				try {
-					manager_start(connection_fd);
+					manager_start(connection_fd, config);
 				} catch (exception &e) {
 					syslog(LOG_ERR, "%s", e.what());
 					manager_destroy();
@@ -180,6 +183,7 @@ int main() {
 				}
 			} else {
 				close(connection_fd);
+				syslog(LOG_DEBUG, "Accept connection and create child process %d", pid);
 			}
 		}
 		clear_resource();
