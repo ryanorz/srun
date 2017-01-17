@@ -1,8 +1,10 @@
 # srun
 This is a service for generating a sandbox to execute commands.
+Give you a security environment to execute your command and service.
 
 ## Features
 
+* Small, fast and utilizing system resource little.
 * Using CGroups to restrict memory use.
 * Using namespaces to restrict network use.
 * Set command chroot.
@@ -28,7 +30,7 @@ This is a service for generating a sandbox to execute commands.
 |         | boost-filesystem | 1.58        | 1.58        | libboost-filesystem-dev | boost-devel      |
 |         | libprotobuf      | 3.0, 2.6.1  | 2.6.1       | libprotobuf-dev         | protobuf         |
 
-# Build
+# Build && install
 
 ```sh
 $ cd <Source Dir>
@@ -37,3 +39,15 @@ $ cmake -DCMAKE_INSTALL_PREFIX=<Prefix> ..
 $ make
 $ sudo make install
 ```
+
+# Start the service
+
+Before you use the tool `srunctl`, you should start the service.
+
+```sh
+$ sudo systemctl start srund
+```
+
+# Tutorials
+
+[Tutorials入门手册](doc/tutorials.md)
