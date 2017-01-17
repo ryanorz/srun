@@ -69,7 +69,7 @@ static int execute(__attribute__((unused))void* _message);
 
 static bool exec_over()
 {
-	return (child_exit && out.over && err.over);
+	return (clonepid <= 0) || (child_exit && out.over && err.over);
 }
 
 static void stop_child()
@@ -140,7 +140,7 @@ void srun::manager_start(int connection_fd, const Config &config)
 
 		if (process_stop) {
 			stop_child();
-			if (clonepid == -1 || exec_over()) {
+			if (exec_over()) {
 				manager_destroy();
 				exit(0);
 			}
