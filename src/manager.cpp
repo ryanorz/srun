@@ -102,7 +102,11 @@ static void clear_clonepid() noexcept
 void srun::manager_destroy() noexcept
 {
 	syslog(LOG_DEBUG, "Manager destroy");
-	clear_clonepid();
+	if (child_status == PROC_RUNNING) {
+		stop_child();
+		sleep(2);
+		wait_child();
+	}
 	closefd(connection);
 	closefd(epollfd);
 	closefd(timerfd);
