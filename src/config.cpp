@@ -149,9 +149,9 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 
 bool srun::Config::loadRequest(Request& request) const noexcept
 {
-	if (request.confgroup().empty())
+	if (request.model().empty())
 		return true;
-	string group = request.confgroup();
+	string group = request.model();
 	for (auto keyfile: keyfiles) {
 		if (g_key_file_has_group(keyfile.second, group.c_str())) {
 			fillRequest(keyfile.second, group, request);
@@ -164,9 +164,9 @@ bool srun::Config::loadRequest(Request& request) const noexcept
 
 bool srun::Config::loadRequest(const string& file, Request& request) const noexcept
 {
-	if (request.confgroup().empty())
+	if (request.model().empty())
 		return true;
-	string group = request.confgroup();
+	string group = request.model();
 
 	GError *error = NULL;
 	GKeyFile *keyfile = g_key_file_new();

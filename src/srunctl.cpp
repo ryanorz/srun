@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 
 		switch(opt) {
 		case 'g':
-			request.set_confgroup(optarg);
+			request.set_model(optarg);
 			break;
 		case 't':
 			request.set_timeout(atoi(optarg));

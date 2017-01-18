@@ -283,7 +283,7 @@ static void recv_message(const Config &config)
 		break;
 	case Message_Method_EXE:
 		request = message.request();
-		syslog(LOG_DEBUG, "Request confgroup : %s", request.confgroup().c_str());
+		syslog(LOG_DEBUG, "Request model : %s", request.model().c_str());
 		config.loadRequest(request);
 		handle_request(data);
 		break;

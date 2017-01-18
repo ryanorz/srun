@@ -6,17 +6,19 @@ message Request {
 		MSG = 1;
 		FILE = 2;
 	}
-	repeated string args = 1;
-	optional int32   timeout = 2 [default = 0];
-	optional string  user = 3;
-	optional string  chroot = 4;
-	optional OutMode outmode = 5 [default = IGN];
-	optional OutMode errmode = 6 [default = IGN];
-	optional string  outfile = 7;
-	optional string  errfile = 8;
-	optional bool   network = 9 [default = false];
-	optional bool   backend = 10 [default = false];
-	optional string confgroup = 11;
+	repeated string  args = 1;
+	optional string  model = 2;
+	optional int32   timeout = 3 [default = 0];
+	optional string  user = 4;
+	optional string  chroot = 5;
+	optional OutMode outmode = 6 [default = IGN];
+	optional OutMode errmode = 7 [default = IGN];
+	optional string  outfile = 8;
+	optional string  errfile = 9;
+	optional bool    network = 10 [default = false];
+	optional bool    backend = 11 [default = false];
+	optional int32   nice = 12 [default = 0];
+	optional string  memory_limit = 13;
 }
 
 message Response {
