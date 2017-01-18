@@ -42,7 +42,7 @@ void do_help()
 	cout << "\t-t timeout   Set command execute timeout" << endl;
 	cout << "\t-u user      Set command execute user" << endl;
 	cout << "\t-r chroot    Set command execute chroot" << endl;
-	cout << "\t-g group     Use config of the group name" << endl;
+	cout << "\t-m model     Set model name( group name of config )" << endl;
 	cout << "\t-n           Use network" << endl;
 	cout << "\t-q           Quiet mode, do not care output and errput" << endl;
 	cout << "\t-b           Process execute at backend" << endl;
@@ -118,12 +118,12 @@ int main(int argc, char *argv[])
 	umask(0);
 	while (1) {
 		bool command_start = false;
-		int opt = getopt(argc, argv, "o:e:qnbt:u:r:g:c");
+		int opt = getopt(argc, argv, "o:e:qnbt:u:r:m:c");
 		if (opt == -1)
 			break;
 
 		switch(opt) {
-		case 'g':
+		case 'm':
 			request.set_model(optarg);
 			break;
 		case 't':

@@ -221,7 +221,8 @@ static void wait_child()
 		} else {
 			response.set_stat(Response_State_ABNORMAL);
 			if (WIFSIGNALED(stat)) {
-				syslog(LOG_NOTICE, "Signal(%d) terminate %d", WTERMSIG(stat), clonepid);
+				syslog(LOG_ERR, "Signal(%d) terminate %d", WTERMSIG(stat), clonepid);
+				syslog(LOG_ERR, "command: %s", request.args(0).c_str());
 			} else {
 				syslog(LOG_ERR, "Command exit abnormally.");
 				for (int i = 0; i < request.args_size(); ++i)
@@ -439,10 +440,21 @@ static void handle_request(const string &data)
 	const string leaf = CGMemoryRoot + "/" + pidstr;
 	ThrowRuntimeIf(!is_directory(leaf) && !create_directories(leaf),
 			"Create " + leaf + " failed.");
-	write_file(leaf + "/memory.limit_in_bytes", "300M");
-	string memswlimit = leaf + "/memory.memsw.limit_in_bytes";
-	if (exists(memswlimit))
-		write_file(memswlimit, "1G");
+	const string memlimit = leaf + "/memory.limit_in_bytes";
+	if (request.memlimit().empty()) // default limit memory use 100M
+		write_file(memlimit, "100M");
+	else if (atoi(request.memlimit().c_str()) > 0)
+		write_file(memlimit, request.memlimit());
+	else
+		syslog(LOG_WARNING, "The request limit memory , cmd = %s", request.args(0).c_str());
+
+	const string memswlimit = leaf + "/memory.memsw.limit_in_bytes";
+	if (exists(memswlimit)) {
+		if (request.memswlimit().empty()) // default limit memory + swap use 1G
+			write_file(memswlimit, "1G");
+		else if (atoi(request.memswlimit().c_str()) > 0)
+			write_file(memswlimit, request.memswlimit());
+	}
 	write_file(leaf + "/cgroup.procs", pidstr);
 	write_file(leaf + "/notify_on_release", "1");
 
@@ -502,6 +514,8 @@ static int execute(__attribute__((unused))void* _message)
 		*    This value is preserved across execve(2).
 		*/
 		prctl(PR_SET_PDEATHSIG, SIGTERM);
+
+		nice(request.nice());
 
 		execv(argv[0], argv);
 		syslog(LOG_ERR, "execv(%s): %m", request.args(0).c_str());

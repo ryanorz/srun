@@ -18,7 +18,8 @@ message Request {
 	bool    network = 10;
 	bool    backend = 11;
 	int32   nice = 12;
-	string  memory_limit = 13;
+	string  memlimit = 13;
+	string  memswlimit = 14;
 }
 
 message Response {

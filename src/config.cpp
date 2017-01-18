@@ -145,6 +145,28 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		g_error_free(error);
 	else
 		request.set_backend(backend);
+
+	int nice = g_key_file_get_integer(keyfile, group.c_str(), "nice", &error);
+	if (error)
+		g_error_free(error);
+	else
+		request.set_nice(nice);
+
+	gstr = g_key_file_get_string(keyfile, group.c_str(), "memory_limit", &error);
+	if (error) {
+		g_error_free(error);
+	} else {
+		request.set_memlimit(gstr);
+		g_free(gstr);
+	}
+
+	gstr = g_key_file_get_string(keyfile, group.c_str(), "memory_limit", &error);
+	if (error) {
+		g_error_free(error);
+	} else {
+		request.set_memswlimit(gstr);
+		g_free(gstr);
+	}
 }
 
 bool srun::Config::loadRequest(Request& request) const noexcept
