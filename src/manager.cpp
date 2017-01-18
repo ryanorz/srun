@@ -103,7 +103,7 @@ void srun::manager_destroy() noexcept
 {
 	syslog(LOG_DEBUG, "Manager destroy");
 	if (child_status == PROC_RUNNING) {
-		stop_child();
+		kill(clonepid, SIGTERM);
 		sleep(2);
 		wait_child();
 	}
@@ -132,7 +132,7 @@ void srun::manager_start(int connection_fd, const Config &config)
 
 		// Deal with client disconnect and command exit
 		if (exec_over()) {
-			if (connection == -1) {
+			if (connection == -1 || process_stop) {
 				manager_destroy();
 				exit(0);
 			} else if (!result_sendback) {
@@ -151,13 +151,8 @@ void srun::manager_start(int connection_fd, const Config &config)
 			}
 		}
 
-		if (process_stop) {
+		if (process_stop)
 			stop_child();
-			if (exec_over()) {
-				manager_destroy();
-				exit(0);
-			}
-		}
 
 		nfds = epoll_wait(epollfd, events, MAX_EVENTS, syn_timeout);
 		ThrowCAPIExceptionIf(nfds == -1 && errno != EINTR, "epoll_wait");
@@ -476,38 +471,43 @@ static void handle_request(const string &data)
 
 static int execute(__attribute__((unused))void* _message)
 {
-	out.dup(1);
-	err.dup(2);
+	try {
+		out.dup(1);
+		err.dup(2);
 
-	struct passwd *pwd = NULL;
-	if (request.user().empty())
-		request.set_user("nobody");
-	pwd = getpwnam(request.user().c_str());
-	ThrowCAPIExceptionIf(pwd == NULL, "Get user error");
-	ThrowCAPIExceptionIf(0 != setgid(pwd->pw_gid), "setgid");
-	ThrowCAPIExceptionIf(0 != setuid(pwd->pw_uid), "setgid");
+		struct passwd *pwd = NULL;
+		if (request.user().empty())
+			request.set_user("nobody");
+		pwd = getpwnam(request.user().c_str());
+		ThrowCAPIExceptionIf(pwd == NULL, "Get user error");
+		ThrowCAPIExceptionIf(0 != setgid(pwd->pw_gid), "setgid");
+		ThrowCAPIExceptionIf(0 != setuid(pwd->pw_uid), "setgid");
 
-	if (!request.chroot().empty()) {
-		int ret = chdir(request.chroot().c_str());
-		ThrowCAPIExceptionIf(0 != ret, "chroot " + request.chroot());
+		if (!request.chroot().empty()) {
+			int ret = chdir(request.chroot().c_str());
+			ThrowCAPIExceptionIf(0 != ret, "chroot " + request.chroot());
+		}
+
+		char *argv[request.args().size() + 1];
+		for (size_t i = 0; i < (size_t)request.args().size(); ++i)
+			argv[i] = const_cast<char *>(request.args(i).c_str());
+		argv[request.args().size()] = NULL;
+
+		/*
+		* PR_SET_PDEATHSIG (since Linux 2.1.57)
+		*    Set  the  parent  death  signal  of  the  calling process to arg2 (either a signal value in the range 1..maxsig, or 0 to clear).
+		*    This is the signal that the calling process will get when its parent dies.
+		*    This value is cleared for the child of a fork(2) and
+		*    (since Linux 2.4.36 / 2.6.23) when executing a set-user-ID or set-group-ID binary, or a binary that has associated capabilities (see capabilities(7)).
+		*    This value is preserved across execve(2).
+		*/
+		prctl(PR_SET_PDEATHSIG, SIGTERM);
+
+		execv(argv[0], argv);
+		syslog(LOG_ERR, "execv(%s): %m", request.args(0).c_str());
+		abort();
+	} catch (exception &e) {
+		syslog(LOG_ERR, "%s", e.what());
+		exit(-1);
 	}
-
-	char *argv[request.args().size() + 1];
-	for (size_t i = 0; i < (size_t)request.args().size(); ++i)
-		argv[i] = const_cast<char *>(request.args(i).c_str());
-	argv[request.args().size()] = NULL;
-
-	/*
-	 * PR_SET_PDEATHSIG (since Linux 2.1.57)
-	 *    Set  the  parent  death  signal  of  the  calling process to arg2 (either a signal value in the range 1..maxsig, or 0 to clear).
-	 *    This is the signal that the calling process will get when its parent dies.
-	 *    This value is cleared for the child of a fork(2) and
-	 *    (since Linux 2.4.36 / 2.6.23) when executing a set-user-ID or set-group-ID binary, or a binary that has associated capabilities (see capabilities(7)).
-	 *    This value is preserved across execve(2).
-         */
-	prctl(PR_SET_PDEATHSIG, SIGTERM);
-
-	execv(argv[0], argv);
-	syslog(LOG_ERR, "execv(%s): %m", request.args(0).c_str());
-	abort();
 }
