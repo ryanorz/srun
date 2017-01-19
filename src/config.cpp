@@ -76,6 +76,7 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		request.set_timeout(timeout);
 
 	gchar *gstr;
+	error = NULL;
 	gstr = g_key_file_get_string(keyfile, group.c_str(), "user", &error);
 	if (error) {
 		g_error_free(error);
@@ -84,6 +85,7 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		g_free(gstr);
 	}
 
+	error = NULL;
 	gstr = g_key_file_get_string(keyfile, group.c_str(), "chroot", &error);
 	if (error) {
 		g_error_free(error);
@@ -92,6 +94,7 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		g_free(gstr);
 	}
 
+	error = NULL;
 	gstr = g_key_file_get_string(keyfile, group.c_str(), "outmode", &error);
 	if (error) {
 		g_error_free(error);
@@ -105,6 +108,7 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		g_free(gstr);
 	}
 
+	error = NULL;
 	gstr = g_key_file_get_string(keyfile, group.c_str(), "errmode", &error);
 	if (error) {
 		g_error_free(error);
@@ -118,6 +122,7 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		g_free(gstr);
 	}
 
+	error = NULL;
 	gstr = g_key_file_get_string(keyfile, group.c_str(), "outfile", &error);
 	if (error) {
 		g_error_free(error);
@@ -126,6 +131,7 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		g_free(gstr);
 	}
 
+	error = NULL;
 	gstr = g_key_file_get_string(keyfile, group.c_str(), "errfile", &error);
 	if (error) {
 		g_error_free(error);
@@ -134,25 +140,29 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		g_free(gstr);
 	}
 
+	error = NULL;
 	gboolean network = g_key_file_get_boolean(keyfile, group.c_str(), "network", &error);
 	if (error)
 		g_error_free(error);
 	else
 		request.set_network(network);
 
+	error = NULL;
 	gboolean backend = g_key_file_get_boolean(keyfile, group.c_str(), "backend", &error);
 	if (error)
 		g_error_free(error);
 	else
 		request.set_backend(backend);
 
+	error = NULL;
 	int nice = g_key_file_get_integer(keyfile, group.c_str(), "nice", &error);
 	if (error)
 		g_error_free(error);
 	else
 		request.set_nice(nice);
 
-	gstr = g_key_file_get_string(keyfile, group.c_str(), "memory_limit", &error);
+	error = NULL;
+	gstr = g_key_file_get_string(keyfile, group.c_str(), "memlimit", &error);
 	if (error) {
 		g_error_free(error);
 	} else {
@@ -160,7 +170,8 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		g_free(gstr);
 	}
 
-	gstr = g_key_file_get_string(keyfile, group.c_str(), "memory_limit", &error);
+	error = NULL;
+	gstr = g_key_file_get_string(keyfile, group.c_str(), "memswlimit", &error);
 	if (error) {
 		g_error_free(error);
 	} else {
