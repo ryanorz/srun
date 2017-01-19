@@ -178,6 +178,20 @@ void srun::Config::fillRequest(GKeyFile* keyfile, const string& group, Request& 
 		request.set_memswlimit(gstr);
 		g_free(gstr);
 	}
+
+	int n = 1;
+	while (1) {
+		error = NULL;
+		string env_key = "env" + to_string(n);
+		gstr = g_key_file_get_string(keyfile, group.c_str(), env_key.c_str(), &error);
+		if (error) {
+			g_error_free(error);
+			break;
+		} else {
+			request.add_envs(gstr);
+			g_free(gstr);
+		}
+	}
 }
 
 bool srun::Config::loadRequest(Request& request) const noexcept

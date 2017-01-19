@@ -517,6 +517,15 @@ static int execute(__attribute__((unused))void* _message)
 
 		nice(request.nice());
 
+		for (size_t i = 0; i < (size_t)request.envs().size(); ++i) {
+			size_t pos = request.envs(i).find_first_of('=');
+			if (pos == string::npos)
+				continue;
+			string name = request.envs(i).substr(0, pos);
+			string value = request.envs(i).substr(pos + 1);
+			setenv(name.c_str(), value.c_str(), 1);
+		}
+
 		execv(argv[0], argv);
 		syslog(LOG_ERR, "execv(%s): %m", request.args(0).c_str());
 		abort();

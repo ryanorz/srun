@@ -20,6 +20,7 @@ message Request {
 	int32   nice = 12;
 	string  memlimit = 13;
 	string  memswlimit = 14;
+	repeated string envs = 15;
 }
 
 message Response {
