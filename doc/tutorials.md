@@ -25,7 +25,6 @@ Usage: srunctl list
 ### `ls /`
 ```sh
 shiy@shiy-pc:~$ srunctl ls
--------------- stdout --------------
 bin
 boot
 cdrom
@@ -56,9 +55,6 @@ The command above will show the result of "ls /". Because the default chroot is 
 
 ```sh
 shiy@shiy-pc:~$ srunctl ls /root
-stat:   Normal
-retval: 2
--------------- stderr --------------
 /bin/ls: cannot open directory '/root': Permission denied
 ```
 Because the default program execution user is `nobody`.
@@ -66,16 +62,11 @@ We should do it like this.
 
 ```sh
 shiy@shiy-pc:~$ srunctl -u root -c ls /root
-stat:   Normal
-retval: 0
 ```
 or like this
 
 ```sh
 shiy@shiy-pc:~$ srunctl -u root -c ls -a /root
-stat:   Normal
-retval: 0
--------------- stdout --------------
 .
 ..
 .aptitude
@@ -98,9 +89,6 @@ retval: 0
 
 ```sh
 shiy@shiy-pc:~$ srunctl ip addr
-stat:   Normal
-retval: 0
--------------- stdout --------------
 1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN group default qlen 1
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 
@@ -109,9 +97,6 @@ Because the service has isolated the network.
 
 ```sh
 shiy@shiy-pc:~$ srunctl -n -c ip addr
-stat:   Normal
-retval: 0
--------------- stdout --------------
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
@@ -130,8 +115,6 @@ retval: 0
 
 ```sh
 shiy@shiy-pc:~$ srunctl -u shiy -b /home/shiy/while
-stat:   Normal
-retval: 0
 shiy@shiy-pc:~$ srunctl list
 PID     RUNTIME NETWORK BACKEND TIMEOUT CMD
 8488    0:0:4   0       1       0       /home/shiy/while
@@ -149,8 +132,6 @@ Set timeout 5 seconds, the process will stop by SIGTERM after timeout.
 
 ```sh
 shiy@shiy-pc:~$ srunctl -u shiy -t 5 -b /home/shiy/while
-stat:   Normal
-retval: 0
 shiy@shiy-pc:~$ srunctl list
 PID     RUNTIME NETWORK BACKEND TIMEOUT CMD
 8546    0:0:2   0       1       5       /home/shiy/while
