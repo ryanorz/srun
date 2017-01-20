@@ -30,10 +30,6 @@ using namespace srun;
 
 void do_help()
 {
-	/**
-	 * -q --quiet
-	 * -d --detail
-	 */
 	cout << "Usage: srunctl list \n";
 	cout << "       srunctl stop PIDS\n";
 	cout << "       srunctl [OPTIONS] -c CMDARGS" << endl << endl;
@@ -200,15 +196,17 @@ int main(int argc, char *argv[])
 
 	switch (response.stat()) {
 	case Response_State_NORMAL:
-		cout << "stat:   Normal" << endl;
-		cout << "retval: " << response.retval() << endl;
-		break;
+		if (!response.outstr().empty())
+			cout << response.outstr() << endl;
+		if (!response.errstr().empty())
+			cout << response.errstr() << endl;
+		return response.retval();
 	case Response_State_ABNORMAL:
 		cout << "stat: Abnormal" << endl;
-		break;
+		return -1;
 	case Response_State_TIMEOUT:
 		cout << "stat: Timeout" << endl;
-		break;
+		return -1;
 	case Response_State_BADARGS:
 		cout << "stat: ArgsError" << endl;
 		return -1;
@@ -216,15 +214,5 @@ int main(int argc, char *argv[])
 		cerr << "Unknown response stat" << endl;
 		return -1;
 	}
-
-	if (!response.outstr().empty()) {
-		cout << "-------------- stdout --------------" << endl;
-		cout << response.outstr() << endl;
-	}
-	if (!response.errstr().empty()) {
-		cout << "-------------- stderr --------------" << endl;
-		cout << response.errstr() << endl;
-	}
-	return 0;
 }
 
